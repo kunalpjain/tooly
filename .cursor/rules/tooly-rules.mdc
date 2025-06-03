@@ -1,0 +1,45 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+## Cursor Rule: Consistent Code and UI Style
+
+- Always follow the **initial style** used in the project unless explicitly asked to change.
+- Do **not introduce a different code style or UI layout pattern** in later components or updates.
+- For example:
+  - If we use functional React components with hooks (useState/useEffect), stick to it across all components.
+  - If we use Tailwind utility-first styling with certain spacing (e.g., p-4, rounded-2xl), keep that consistent across the app.
+  - If we define components with named folders and PascalCase files (`SmartConverter.tsx`), keep the structure uniform.
+- Avoid mixing styling approaches (e.g., don’t switch between Tailwind and inline styles, or between Tailwind and CSS modules).
+- Avoid overengineering or adding abstraction unless a pattern has already been established.
+- Assume we are **a single developer team** and prioritize readability, simplicity, and consistency.
+
+ Goal: Make sure every file in this repo feels like it’s written by the same person.
+
+# 🚫 Temporary & Obsolete Code Cleanup Rule
+
+During updates or debugging, developers may introduce temporary logic such as:
+
+- `console.log`, `debugger` or print statements
+- Hardcoded mock data or short-circuit return paths
+- Duplicate or old versions of functions
+- Commented-out or unused code blocks
+
+These **must be removed before finalizing a code update**.
+
+✅ When generating or modifying code, always:
+- Remove any debug-related code (e.g., console logs, debugger)
+- Remove unused mock data, hardcoded logic, or test scaffolding
+- Delete all outdated or unused code blocks
+- Ensure only *active*, production-ready logic remains in the final code
+
+🚨 Do not retain commented-out legacy logic as reference — use Git history instead.
+
+💡 Example:
+```js
+// ❌ Bad
+console.log("DEBUG - raw input", input);
+
+// ✅ Good
+// (removed after confirming base64 decoding worked)
