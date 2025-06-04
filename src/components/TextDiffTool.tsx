@@ -217,8 +217,8 @@ const TextDiffTool: React.FC = () => {
                   <span key={index} className={className}>
                     {part.value}
                   </span>
-                );
-              })}
+          );
+        })}
             </div>
           </div>
         </div>
@@ -271,7 +271,7 @@ const TextDiffTool: React.FC = () => {
           <div className="flex items-center justify-between mb-2">
             <label htmlFor="leftText" className="block text-sm font-medium text-gray-700">
               Text A
-            </label>
+          </label>
             <button
               onClick={() => copyToClipboard(leftText)}
               className="text-xs text-blue-600 hover:text-blue-800 transition-colors"
@@ -293,7 +293,7 @@ const TextDiffTool: React.FC = () => {
           <div className="flex items-center justify-between mb-2">
             <label htmlFor="rightText" className="block text-sm font-medium text-gray-700">
               Text B
-            </label>
+          </label>
             <button
               onClick={() => copyToClipboard(rightText)}
               className="text-xs text-blue-600 hover:text-blue-800 transition-colors"
@@ -332,7 +332,7 @@ const TextDiffTool: React.FC = () => {
         >
           Clear
         </button>
-        
+
         {/* Diff Mode Toggle */}
         <div className="flex border border-gray-300 rounded-md overflow-hidden">
           <button
@@ -356,7 +356,7 @@ const TextDiffTool: React.FC = () => {
             🔤 Chars
           </button>
         </div>
-
+        
         {showDiff && diffParts.length > 0 && (
           <button
             onClick={() => setShowUnified(!showUnified)}
@@ -375,19 +375,19 @@ const TextDiffTool: React.FC = () => {
       {showDiff && (
         <div className="mb-4 p-3 bg-gray-50 rounded-md">
           <div className="flex items-center gap-6 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-green-500 rounded"></div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-green-500 rounded"></div>
               <span className="font-medium text-green-800">
                 {stats.added} {diffMode === 'lines' ? 'lines' : 'characters'} added
               </span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 bg-red-500 rounded"></div>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 bg-red-500 rounded"></div>
               <span className="font-medium text-red-800">
                 {stats.removed} {diffMode === 'lines' ? 'lines' : 'characters'} removed
               </span>
-            </div>
-            <div className="flex items-center gap-2">
+              </div>
+              <div className="flex items-center gap-2">
               <div className="w-3 h-3 bg-gray-400 rounded"></div>
               <span className="font-medium text-gray-700">
                 {stats.unchanged} {diffMode === 'lines' ? 'lines' : 'characters'} unchanged

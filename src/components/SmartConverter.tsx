@@ -2,6 +2,8 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 
 type EncodingType = 'base64' | 'url' | 'jwt' | 'hex' | 'unicode';
 
+
+
 const SmartConverter: React.FC = () => {
   const [leftText, setLeftText] = useState('');
   const [rightText, setRightText] = useState('');
@@ -10,6 +12,7 @@ const SmartConverter: React.FC = () => {
   const [lastModified, setLastModified] = useState<'left' | 'right' | null>(null);
   const [copyFeedback, setCopyFeedback] = useState<'left' | 'right' | null>(null);
   const [showSyntaxHighlight, setShowSyntaxHighlight] = useState(false);
+  const [collapsedPaths, setCollapsedPaths] = useState<Set<string>>(new Set());
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const highlightRef = useRef<HTMLDivElement>(null);
 
@@ -36,7 +39,7 @@ const SmartConverter: React.FC = () => {
         result += String.fromCharCode(byte);
       }
     }
-    
+
     try {
       return decodeURIComponent(escape(result));
     } catch {
@@ -62,7 +65,7 @@ const SmartConverter: React.FC = () => {
       while (cleanInput.length % 4) {
         cleanInput += '=';
       }
-      
+
       // Try standard atob first
       try {
         return decodeURIComponent(escape(atob(cleanInput)));
@@ -139,7 +142,7 @@ const SmartConverter: React.FC = () => {
           throw new Error('Invalid hex character');
         }
         result += String.fromCharCode(charCode);
-      }
+    }
       return result;
     } catch (error) {
       throw new Error('Invalid hex string');
@@ -290,7 +293,7 @@ const SmartConverter: React.FC = () => {
       if (beautified !== trimmed) {
         setLastModified(null);
         setRightText(beautified);
-        setError('');
+      setError('');
         // Enable syntax highlighting after successful beautification
         if (beautified.trim().startsWith('{') || beautified.trim().startsWith('[')) {
           setShowSyntaxHighlight(true);
@@ -304,7 +307,155 @@ const SmartConverter: React.FC = () => {
     }
   }, [rightText]);
 
-  // JSON syntax highlighter with error highlighting
+  // Toggle collapse/expand for a path and its direct children
+  const toggleCollapse = useCallback((path: string, obj: any) => {
+    setCollapsedPaths(prev => {
+      const newSet = new Set(prev);
+      const isCurrentlyCollapsed = newSet.has(path);
+      
+      if (isCurrentlyCollapsed) {
+        // Expanding: remove current path and expand direct children
+        newSet.delete(path);
+        
+        // Also expand all direct children (first level only)
+        if (Array.isArray(obj)) {
+          obj.forEach((item, index) => {
+            if (typeof item === 'object' && item !== null) {
+              const childPath = path === '' ? `[${index}]` : `${path}[${index}]`;
+              newSet.delete(childPath);
+            }
+          });
+        } else if (typeof obj === 'object' && obj !== null) {
+          Object.keys(obj).forEach(key => {
+            if (typeof obj[key] === 'object' && obj[key] !== null) {
+              const childPath = path === '' ? key : `${path}.${key}`;
+              newSet.delete(childPath);
+            }
+          });
+        }
+      } else {
+        // Collapsing: add current path
+        newSet.add(path);
+      }
+      
+      return newSet;
+    });
+  }, []);
+
+  // Render collapsible JSON with syntax highlighting
+  const renderCollapsibleJSON = useCallback((obj: any, path: string = '', indentLevel: number = 0): React.ReactElement => {
+    
+    if (obj === null) {
+      return <span className="text-gray-500 italic">null</span>;
+    }
+    
+    if (typeof obj === 'boolean') {
+      return <span className="text-purple-600 font-medium">{obj.toString()}</span>;
+    }
+    
+    if (typeof obj === 'number') {
+      return <span className="text-orange-600 font-medium">{obj}</span>;
+    }
+    
+    if (typeof obj === 'string') {
+      return <span className="text-green-600">"{obj}"</span>;
+    }
+    
+    if (Array.isArray(obj)) {
+      const isCollapsed = collapsedPaths.has(path);
+      const isEmpty = obj.length === 0;
+      
+      if (isEmpty) {
+        return <span className="text-gray-800 font-bold">[]</span>;
+      }
+      
+      return (
+        <span>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              toggleCollapse(path, obj);
+            }}
+            className="relative z-30 inline-flex items-center justify-center w-5 h-5 mr-2 text-white bg-blue-500 hover:bg-blue-600 rounded-full transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+            title={isCollapsed ? "Expand array and children" : "Collapse array"}
+          >
+            <span className="text-xs font-medium leading-none">
+              {isCollapsed ? '+' : '−'}
+            </span>
+          </button>
+          <span className="text-gray-800 font-bold">[</span>
+          {isCollapsed ? (
+            <span className="text-gray-500 italic"> ... {obj.length} items </span>
+          ) : (
+            <>
+              <br />
+              {obj.map((item, index) => (
+                <div key={index} style={{ marginLeft: `${(indentLevel + 1) * 20}px` }}>
+                  {renderCollapsibleJSON(item, path === '' ? `[${index}]` : `${path}[${index}]`, indentLevel + 1)}
+                  {index < obj.length - 1 && <span className="text-gray-800 font-bold">,</span>}
+                  <br />
+                </div>
+              ))}
+              <div style={{ marginLeft: `${indentLevel * 20}px` }}></div>
+            </>
+          )}
+          <span className="text-gray-800 font-bold">]</span>
+        </span>
+      );
+    }
+    
+    if (typeof obj === 'object') {
+      const keys = Object.keys(obj);
+      const isCollapsed = collapsedPaths.has(path);
+      const isEmpty = keys.length === 0;
+      
+      if (isEmpty) {
+        return <span className="text-gray-800 font-bold">{"{}"}</span>;
+      }
+      
+      return (
+        <span>
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              toggleCollapse(path, obj);
+            }}
+            className="relative z-30 inline-flex items-center justify-center w-5 h-5 mr-2 text-white bg-blue-500 hover:bg-blue-600 rounded-full transition-all duration-200 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
+            title={isCollapsed ? "Expand object and children" : "Collapse object"}
+          >
+            <span className="text-xs font-medium leading-none">
+              {isCollapsed ? '+' : '−'}
+            </span>
+          </button>
+          <span className="text-gray-800 font-bold">{"{"}</span>
+          {isCollapsed ? (
+            <span className="text-gray-500 italic"> ... {keys.length} keys </span>
+          ) : (
+            <>
+              <br />
+              {keys.map((key, index) => (
+                <div key={key} style={{ marginLeft: `${(indentLevel + 1) * 20}px` }}>
+                  <span className="text-blue-600 font-semibold">"{key}"</span>
+                  <span className="text-gray-800 font-bold">: </span>
+                  {renderCollapsibleJSON(obj[key], path === '' ? key : `${path}.${key}`, indentLevel + 1)}
+                  {index < keys.length - 1 && <span className="text-gray-800 font-bold">,</span>}
+                  <br />
+                </div>
+              ))}
+              <div style={{ marginLeft: `${indentLevel * 20}px` }}></div>
+            </>
+          )}
+          <span className="text-gray-800 font-bold">{"}"}</span>
+        </span>
+      );
+    }
+    
+    return <span>{String(obj)}</span>;
+  }, [collapsedPaths, toggleCollapse]);
+
+  // Main JSON renderer with error handling
   const highlightJSON = useCallback((jsonString: string): React.ReactElement => {
     if (!jsonString.trim()) {
       return <span className="text-gray-400">No content</span>;
@@ -312,30 +463,27 @@ const SmartConverter: React.FC = () => {
 
     // Check if it's valid JSON first
     let isValidJSON = false;
+    let parsedData: any = null;
+    
     try {
-      JSON.parse(jsonString);
+      parsedData = JSON.parse(jsonString);
       isValidJSON = true;
     } catch {
       isValidJSON = false;
     }
 
-    // Apply syntax highlighting line by line
-    const lines = jsonString.split('\n');
-    const highlightedLines = lines.map((line, index) => {
-      let highlighted = line;
-      
-      if (isValidJSON) {
-        // Valid JSON - apply full syntax highlighting
-        highlighted = highlighted
-          .replace(/"([^"]+)":/g, '<span class="text-blue-600 font-semibold">"$1"</span>:')
-          .replace(/:\s*"([^"]*)"/g, ': <span class="text-green-600">"$1"</span>')
-          .replace(/:\s*(true|false)/g, ': <span class="text-purple-600 font-medium">$1</span>')
-          .replace(/:\s*(null)/g, ': <span class="text-gray-500 italic">$1</span>')
-          .replace(/:\s*(\d+(?:\.\d+)?)\s*([,}\]])/g, ': <span class="text-orange-600 font-medium">$1</span>$2')
-          .replace(/([{}[\],])/g, '<span class="text-gray-800 font-bold">$1</span>');
-      } else {
-        // Invalid JSON - apply partial highlighting with error indicators
-        highlighted = highlighted
+    if (isValidJSON && parsedData && (typeof parsedData === 'object')) {
+      // Valid JSON - render with collapsible structure
+      return (
+        <div className="whitespace-pre-wrap font-mono text-sm">
+          {renderCollapsibleJSON(parsedData)}
+        </div>
+      );
+    } else {
+      // Invalid JSON - fall back to simple syntax highlighting
+      const lines = jsonString.split('\n');
+      const highlightedLines = lines.map((line, index) => {
+        let highlighted = line
           // Highlight quoted strings (both valid and invalid)
           .replace(/"([^"]*)":/g, '<span class="text-blue-600 font-semibold">"$1"</span>:')
           .replace(/:\s*"([^"]*)"/g, ': <span class="text-green-600">"$1"</span>')
@@ -352,24 +500,22 @@ const SmartConverter: React.FC = () => {
           .replace(/([{}[\],])/g, '<span class="text-gray-800 font-bold">$1</span>')
           // Highlight trailing commas (common error) with error color
           .replace(/,(\s*[}\]])/g, '<span class="text-red-600 bg-red-100 px-1 rounded">,</span>$1');
-      }
+
+        return (
+          <div key={index} dangerouslySetInnerHTML={{ __html: highlighted }} />
+        );
+      });
 
       return (
-        <div key={index} dangerouslySetInnerHTML={{ __html: highlighted }} />
-      );
-    });
-
-    return (
-      <div className="whitespace-pre-wrap">
-        {!isValidJSON && (
+        <div className="whitespace-pre-wrap">
           <div className="text-red-600 text-sm mb-2 bg-red-50 p-2 rounded border-l-4 border-red-400">
-            ⚠️ Invalid JSON detected. Yellow highlights show common errors.
+            ⚠️ Invalid JSON detected. Click Beautify to fix common errors.
           </div>
-        )}
-        {highlightedLines}
-      </div>
-    );
-  }, []);
+          {highlightedLines}
+        </div>
+      );
+    }
+  }, [renderCollapsibleJSON]);
 
   // Sync scroll between textarea and highlight background
   const handleScroll = useCallback((e: React.UIEvent<HTMLTextAreaElement>) => {
@@ -383,8 +529,8 @@ const SmartConverter: React.FC = () => {
   useEffect(() => {
     if (lastModified === 'left' && leftText.trim()) {
       // Decode from left (encoded) to right (plain)
-      try {
-        setError('');
+    try {
+      setError('');
         let result = '';
         
         if (encodingType === 'base64') {
@@ -539,6 +685,60 @@ const SmartConverter: React.FC = () => {
     return 'Beautify';
   };
 
+  // Expand all JSON nodes
+  const expandAll = useCallback(() => {
+    setCollapsedPaths(new Set());
+  }, []);
+
+  // Collapse all JSON nodes
+  const collapseAll = useCallback(() => {
+    if (!rightText.trim()) return;
+    
+    try {
+      const parsedData = JSON.parse(rightText);
+      const allPaths = new Set<string>();
+      
+      const collectPaths = (obj: any, path: string = '') => {
+        if (Array.isArray(obj)) {
+          if (obj.length > 0) {
+            allPaths.add(path);
+            obj.forEach((item, index) => {
+              if (typeof item === 'object' && item !== null) {
+                collectPaths(item, path === '' ? `[${index}]` : `${path}[${index}]`);
+              }
+            });
+          }
+        } else if (typeof obj === 'object' && obj !== null) {
+          const keys = Object.keys(obj);
+          if (keys.length > 0) {
+            allPaths.add(path);
+            keys.forEach(key => {
+              if (typeof obj[key] === 'object' && obj[key] !== null) {
+                collectPaths(obj[key], path === '' ? key : `${path}.${key}`);
+              }
+            });
+          }
+        }
+      };
+      
+      collectPaths(parsedData);
+      setCollapsedPaths(allPaths);
+    } catch {
+      // Not valid JSON, do nothing
+    }
+  }, [rightText]);
+
+  // Check if JSON is valid and has collapsible content
+  const hasCollapsibleContent = useCallback(() => {
+    if (!rightText.trim()) return false;
+    try {
+      const parsedData = JSON.parse(rightText);
+      return typeof parsedData === 'object' && parsedData !== null;
+    } catch {
+      return false;
+    }
+  }, [rightText]);
+
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       <h2 className="text-xl font-semibold text-gray-900 mb-6 tracking-tight">Smart Converter</h2>
@@ -549,7 +749,7 @@ const SmartConverter: React.FC = () => {
           <div className="flex items-center justify-between mb-3">
             <label htmlFor="encoded-text" className="block text-base font-medium text-gray-700">
               {getEncodingLabel()}
-            </label>
+        </label>
             <div className="flex space-x-2">
               <button
                 onClick={handleCopyLeft}
@@ -566,7 +766,7 @@ const SmartConverter: React.FC = () => {
               </button>
             </div>
           </div>
-          <textarea
+        <textarea
             id="encoded-text"
             value={leftText}
             onChange={(e) => handleLeftTextChange(e.target.value)}
@@ -574,8 +774,8 @@ const SmartConverter: React.FC = () => {
             placeholder={getPlaceholder()}
             ref={textareaRef}
             onScroll={handleScroll}
-          />
-        </div>
+        />
+      </div>
 
         {/* Middle Panel - Controls */}
         <div className="lg:col-span-2 flex flex-col items-center justify-start pt-8">
@@ -593,17 +793,17 @@ const SmartConverter: React.FC = () => {
               >
                 Base64
               </button>
-              <button
+        <button
                 onClick={() => setEncodingType('url')}
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors w-full ${
                   encodingType === 'url'
                     ? 'bg-blue-600 text-white shadow-sm'
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 }`}
-              >
+        >
                 URL Encode
-              </button>
-              <button
+        </button>
+        <button
                 onClick={() => setEncodingType('jwt')}
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors w-full ${
                   encodingType === 'jwt'
@@ -612,8 +812,8 @@ const SmartConverter: React.FC = () => {
                 }`}
               >
                 JWT Decode
-              </button>
-              <button
+        </button>
+        <button
                 onClick={() => setEncodingType('hex')}
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors w-full ${
                   encodingType === 'hex'
@@ -622,8 +822,8 @@ const SmartConverter: React.FC = () => {
                 }`}
               >
                 Hex / ASCII
-              </button>
-              <button
+        </button>
+        <button
                 onClick={() => setEncodingType('unicode')}
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors w-full ${
                   encodingType === 'unicode'
@@ -644,36 +844,54 @@ const SmartConverter: React.FC = () => {
               {encodingType === 'jwt' ? 'Decoded JWT' : 'Plain Text'}
             </label>
             <div className="flex space-x-2">
+              {showSyntaxHighlight && hasCollapsibleContent() && (
+                <>
+                  <button
+                    onClick={expandAll}
+                    className="text-xs text-blue-600 hover:text-white hover:bg-blue-600 transition-all duration-200 px-3 py-1.5 rounded-full border border-blue-300 hover:border-blue-600 font-medium"
+                    title="Expand all JSON nodes"
+                  >
+                    − All
+                  </button>
+                  <button
+                    onClick={collapseAll}
+                    className="text-xs text-blue-600 hover:text-white hover:bg-blue-600 transition-all duration-200 px-3 py-1.5 rounded-full border border-blue-300 hover:border-blue-600 font-medium"
+                    title="Collapse all JSON nodes"
+                  >
+                    + All
+                  </button>
+                </>
+              )}
               <button
                 onClick={handleBeautify}
                 className="text-sm text-gray-500 hover:text-gray-700 transition-colors px-2 py-1 rounded hover:bg-gray-100"
                 disabled={!rightText}
               >
                 {getBeautifyButtonText()}
-              </button>
-              <button
+        </button>
+        <button
                 onClick={handleCopyRight}
                 className="text-sm text-gray-500 hover:text-gray-700 transition-colors px-2 py-1 rounded hover:bg-gray-100"
                 disabled={!rightText}
-              >
+        >
                 {copyFeedback === 'right' ? '✓ Copied!' : 'Copy'}
-              </button>
-              <button
+        </button>
+        <button
                 onClick={handleClearRight}
                 className="text-sm text-gray-500 hover:text-gray-700 transition-colors px-2 py-1 rounded hover:bg-gray-100"
-              >
-                Clear
-              </button>
-            </div>
+        >
+          Clear
+        </button>
+      </div>
           </div>
-          
+
           {/* Single textarea with optional syntax highlighting background */}
           <div className="relative">
             {/* Syntax highlighted background - only show when enabled and content is JSON */}
             {showSyntaxHighlight && rightText && (rightText.trim().startsWith('{') || rightText.trim().startsWith('[')) && (
               <div 
-                className="absolute inset-0 w-full h-[900px] p-4 border border-gray-300 rounded-lg font-mono text-sm overflow-auto pointer-events-none z-0 whitespace-pre-wrap break-words"
-                style={{ scrollBehavior: 'auto' }}
+                className="absolute inset-0 w-full h-[900px] p-4 border border-gray-300 rounded-lg font-mono text-sm overflow-auto z-20 whitespace-pre-wrap break-words"
+                style={{ scrollBehavior: 'auto', pointerEvents: 'auto' }}
                 ref={highlightRef}
               >
                 {highlightJSON(rightText)}
@@ -681,7 +899,7 @@ const SmartConverter: React.FC = () => {
             )}
             
             {/* Editable textarea */}
-            <textarea
+        <textarea
               id="plain-text"
               value={rightText}
               onChange={(e) => handleRightTextChange(e.target.value)}
@@ -694,7 +912,9 @@ const SmartConverter: React.FC = () => {
               }`}
               placeholder={encodingType === 'jwt' ? 'Decoded JWT will appear here...' : 'Plain text will appear here...'}
               readOnly={encodingType === 'jwt'}
-              style={showSyntaxHighlight && rightText && (rightText.trim().startsWith('{') || rightText.trim().startsWith('[')) ? { caretColor: '#1f2937' } : {}}
+              style={{
+                ...(showSyntaxHighlight && rightText && (rightText.trim().startsWith('{') || rightText.trim().startsWith('[')) ? { caretColor: '#1f2937', pointerEvents: 'none' } : {}),
+              }}
             />
           </div>
         </div>
