@@ -55,7 +55,7 @@
   ],
   "author": "Your Name",
   "license": "MIT",
-  "homepage": "https://github.com/chken007/tooly#readme",
+  "homepage": ".",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/chken007/tooly.git"
