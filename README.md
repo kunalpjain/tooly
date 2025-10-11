@@ -205,23 +205,36 @@ This builds the app for production to the `build` folder. The build is minified 
 
 ## 🚀 Deployment
 
-### Quick Deploy Script
-```bash
-./deploy.sh [platform]
-```
+### Deploy to Vercel (Recommended)
 
-Supported platforms:
-- `vercel` - Deploy to Vercel (recommended)
-- `netlify` - Deploy to Netlify
-- `github-pages` - Deploy to GitHub Pages
+**One-click deployment:**
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/chken007/tooly)
 
-### Manual Deployment
+**Manual deployment:**
+1. Install Vercel CLI: `npm i -g vercel`
+2. Run: `npm run deploy`
+3. Follow the prompts to configure your project
+
+**Git-based deployment:**
+1. Connect your GitHub repository to Vercel
+2. Vercel will automatically deploy on every push to main branch
+3. Get instant previews for pull requests
+
+### Other Deployment Options
+
+#### Netlify
 1. Run `npm run build`
-2. Deploy the `build` folder to your preferred hosting service:
-   - **Vercel**: `vercel --prod`
-   - **Netlify**: Drag and drop the `build` folder
-   - **GitHub Pages**: `gh-pages -d build`
-   - **Any static host**: Upload `build` contents to web root
+2. Drag and drop the `build` folder to Netlify dashboard
+3. Or use Netlify CLI: `netlify deploy --prod --dir=build`
+
+#### GitHub Pages
+1. Install gh-pages: `npm install -g gh-pages`
+2. Run: `gh-pages -d build`
+3. Configure GitHub Pages in repository settings
+
+#### Any Static Host
+1. Run `npm run build`
+2. Upload the `build` folder contents to your web server
 
 ---
 
