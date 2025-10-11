@@ -40,36 +40,86 @@ Comprehensive timestamp conversion tool:
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js (v14 or higher)
-- npm or yarn
+- **Node.js** (v14 or higher) - [Download here](https://nodejs.org/)
+- **npm** (comes with Node.js) or **yarn**
+
+> 💡 **New to Node.js?** Node.js is a JavaScript runtime that allows you to run JavaScript outside of a browser. It's essential for running React applications.
 
 ### Installation
 
-1. Clone the repository:
+1. **Clone the repository:**
 ```bash
 git clone https://github.com/chken007/tooly.git
 cd tooly
 ```
 
-2. Install dependencies:
+2. **Install dependencies:**
 ```bash
 npm install
 ```
+> This downloads all the required packages listed in `package.json`
 
-3. Start the development server:
+3. **Start the development server:**
 ```bash
 npm start
 ```
 
-4. Open your browser and navigate to `http://localhost:3000`
+4. **Open your browser** and navigate to `http://localhost:3000`
+
+> 🎉 **That's it!** The app should automatically open in your browser. If not, manually go to `http://localhost:3000`
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+**❌ "command not found: npm"**
+- **Solution**: Install Node.js from [nodejs.org](https://nodejs.org/)
+- **Check**: Run `node --version` and `npm --version`
+
+**❌ "Port 3000 is already in use"**
+- **Solution**: Kill the process using port 3000:
+```bash
+# On macOS/Linux
+lsof -ti:3000 | xargs kill -9
+
+# Or use a different port
+PORT=3001 npm start
+```
+
+**❌ "Module not found" errors**
+- **Solution**: Delete `node_modules` and reinstall:
+```bash
+rm -rf node_modules package-lock.json
+npm install
+```
+
+**❌ Page shows blank/empty**
+- **Solution**: Check browser console for errors (F12 → Console)
+- **Common cause**: JavaScript errors or missing dependencies
+
+**❌ "Permission denied" on macOS/Linux**
+- **Solution**: Use `sudo` or fix npm permissions:
+```bash
+sudo npm install
+# OR
+npm config set prefix ~/.npm-global
+```
+
+### Getting Help
+
+If you're still having issues:
+1. Check the [Issues](https://github.com/chken007/tooly/issues) page
+2. Create a new issue with your error message
+3. Include your operating system and Node.js version
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: React 18 with TypeScript
+- **Frontend**: React 19 with TypeScript
 - **Styling**: TailwindCSS for modern, responsive design
 - **Build Tool**: Create React App
 - **Code Quality**: ESLint for code linting
 - **Package Manager**: npm
+- **Node.js**: v14+ (tested with v24.8.0)
 
 ## 📁 Project Structure
 
