@@ -3,7 +3,6 @@ node_modules/
 
 # Development files
 src/
-public/
 
 # Config files
 .env
