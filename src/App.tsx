@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import SmartConverter from './components/SmartConverter';
 import TextDiffTool from './components/TextDiffTool';
 import ListWizard from './components/ListWizard';
 import TimeConverter from './components/TimeConverter';
+import About from './components/About';
 
-function App() {
+function AppContent() {
   const [activeTab, setActiveTab] = useState('converter');
+  const location = useLocation();
 
   const tabs = [
     { id: 'converter', label: 'Smart Converter', component: SmartConverter },
@@ -13,6 +16,11 @@ function App() {
     { id: 'wizard', label: 'List Wizard', component: ListWizard },
     { id: 'time', label: 'Time Converter', component: TimeConverter }
   ];
+
+  // If we're on the about page, don't show the main app layout
+  if (location.pathname === '/about') {
+    return <About />;
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -22,16 +30,24 @@ function App() {
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
               {/* Logo */}
-              <div className="flex items-center mr-4">
+              <Link to="/" className="flex items-center mr-4">
                 <img 
                   src="/tooly-icon.svg" 
                   alt="Tooly Logo" 
                   className="w-8 h-8 mr-3"
                 />
                 <h1 className="text-2xl font-bold text-gray-900 font-mono">Tooly</h1>
-              </div>
+              </Link>
               <span className="ml-3 text-sm text-gray-600 font-medium">🔧 Simple tools for everyday coding</span>
             </div>
+            <nav className="flex items-center space-x-4">
+              <Link 
+                to="/about" 
+                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                About
+              </Link>
+            </nav>
           </div>
         </div>
       </header>
@@ -82,6 +98,16 @@ function App() {
         </div>
       </footer>
     </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/*" element={<AppContent />} />
+      </Routes>
+    </Router>
   );
 }
 
