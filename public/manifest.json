@@ -1,6 +1,7 @@
 {
   "short_name": "Tooly",
-  "name": "Tooly - Simple tools for everyday coding",
+  "name": "Tooly - Free Developer Tools: JSON, Base64, JWT & More",
+  "description": "Free online developer tools: JSON formatter, Base64 encoder/decoder, JWT decoder, text diff, timestamp converter. No ads, no signup.",
   "icons": [
     {
       "src": "favicon-16.svg",
@@ -25,6 +26,8 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#2563eb",
-  "background_color": "#f9fafb"
+  "theme_color": "#f97316",
+  "background_color": "#fafaf9",
+  "categories": ["developer-tools", "utilities", "productivity"],
+  "lang": "en"
 }
